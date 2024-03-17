@@ -1,16 +1,20 @@
 package main
 
+import (
+	"strings"
+)
+
 var tokens = map[string]string{
 	"yoink":      "select",
 	"fr":         "=",
 	"skibity":    "from",
-	"on_god":     "where",
+	"on god":     "where",
 	"goon":       "and",
 	"edge":       "or",
 	"bruh":       "not",
 	"rizz":       "update",
-	"short_king": "asc",
-	"tall_king":  "desc",
+	"short king": "asc",
+	"tall king":  "desc",
 	"yeet":       "delete",
 	"slide":      "insert",
 }
@@ -24,39 +28,46 @@ type parser struct {
 }
 
 func (p *parser) next() {
+	p.pos += 1
 	if p.pos >= len(p.input) {
 		p.curr = 0
 		return
 	}
 	p.curr = p.input[p.pos]
-	p.pos++
-}
-
-func (p *parser) peek() byte {
-	if p.pos >= len(p.input) {
-		return 0
-	}
-	return p.input[p.pos]
 }
 
 func (p *parser) parse() string {
-	p.nextToken = p.parseToken()
-	for p.nextToken != "" {
-		p.output += p.nextToken
-		p.nextToken = p.parseToken()
-	}
-	return p.output
-}
-
-func (p *parser) parseToken() string {
 	var currToken string
-	for p.curr == ' ' {
+	p.pos = -1
+	p.curr = ' '
+	for p.pos <= len(p.input) && p.curr != 0 {
 		p.next()
+		currToken += string(p.curr)
+
+		if val, ok := tokens[currToken]; ok {
+			p.output += val
+			currToken = ""
+		} else {
+			if p.curr == ' ' {
+				if strings.Contains(currToken, "short") ||
+					strings.Contains(currToken, "tall") ||
+					strings.Contains(currToken, "on") {
+					continue
+				} else if currToken != "" {
+					p.output += currToken
+					currToken = ""
+				} else {
+					currToken = ""
+					p.output += " "
+				}
+			}
+		}
+
 	}
 
-	if p.curr == 0 {
-		return ""
+	if currToken != "" {
+		p.output += currToken[:len(currToken)-1]
 	}
 
-	return currToken
+	return p.output
 }
